@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.vsix
+.vscode/
+*.log
+
+# vscode-extension build outputs
+vscode-extension/node_modules/
+vscode-extension/out/
+vscode-extension/server/
+vscode-extension/*.vsix
