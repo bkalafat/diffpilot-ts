@@ -232,62 +232,16 @@ export async function reviewPrChanges(args?: ReviewPrChangesParams): Promise<Too
   }
 
   output += '## Review Instructions\n\n';
-  output += '⚠️ **CRITICAL REVIEW MODE** - Focus on finding problems, not praise.\n\n';
-  output += 'Analyze the code changes below and identify ALL issues. Be thorough and critical.\n';
-  output += 'Limit positive feedback to 1-2 items maximum. Prioritize finding defects.\n\n';
-
-  output += '### 🔴 Security Vulnerabilities (HIGHEST PRIORITY)\n';
-  output += '- **Injection Flaws** - SQL injection, command injection, LDAP injection, XPath injection\n';
-  output += '- **XSS (Cross-Site Scripting)** - Reflected, stored, DOM-based XSS vulnerabilities\n';
-  output += '- **Authentication/Authorization** - Broken auth, missing access controls, privilege escalation\n';
-  output += '- **Sensitive Data Exposure** - Hardcoded secrets, PII leakage, insecure data transmission\n';
-  output += '- **Insecure Deserialization** - Untrusted data deserialization without validation\n';
-  output += '- **SSRF/CSRF** - Server-side request forgery, cross-site request forgery\n';
-  output += '- **Path Traversal** - Directory traversal, file inclusion vulnerabilities\n';
-  output += '- **Cryptographic Failures** - Weak algorithms, improper key management, missing encryption\n\n';
-
-  output += '### 🟠 Correctness & Logic Errors\n';
-  output += '- **Logic Flaws** - Incorrect conditions, off-by-one errors, race conditions\n';
-  output += '- **Null/Undefined Handling** - Missing null checks, uninitialized variables\n';
-  output += '- **Edge Cases** - Boundary conditions, empty inputs, overflow scenarios\n';
-  output += '- **Resource Leaks** - Unclosed connections, memory leaks, file handle leaks\n';
-  output += '- **Concurrency Issues** - Thread safety, deadlocks, data races\n\n';
-
-  output += '### 🟡 Error Handling & Resilience\n';
-  output += '- **Missing Exception Handling** - Unhandled exceptions, swallowed errors\n';
-  output += '- **Information Disclosure** - Stack traces exposed, verbose error messages\n';
-  output += '- **Fail-Open Behavior** - Security controls that fail permissively\n';
-  output += '- **Missing Input Validation** - Unvalidated user input, missing sanitization\n\n';
-
-  output += '### 🟢 Performance & Efficiency\n';
-  output += '- **N+1 Query Problems** - Database queries in loops\n';
-  output += '- **Memory Inefficiency** - Unnecessary allocations, large object retention\n';
-  output += '- **Algorithm Complexity** - O(n²) or worse where O(n) is possible\n';
-  output += '- **Resource Exhaustion** - Unbounded loops, missing pagination, DoS vectors\n\n';
-
-  output += '### 🔵 Code Quality & Maintainability\n';
-  output += '- **Code Duplication** - Copy-paste code, DRY violations\n';
-  output += '- **SOLID Violations** - Single responsibility, open/closed principle issues\n';
-  output += '- **Naming/Readability** - Unclear names, magic numbers, missing comments\n';
-  output += '- **Test Coverage Gaps** - Untested paths, missing edge case tests\n\n';
+  output += 'Report ONLY issues in this format:\n\n';
+  output += '`file:line` - [severity] [issue] → [suggestion]\n\n';
+  output += 'Severity: 🔴 Critical | 🟠 Major | 🟡 Minor\n\n';
+  output += 'Focus: Security, bugs, performance. Skip praise.\n\n';
 
   if (focusAreas) {
-    output += `**Additional Focus Areas:** ${focusAreas}\n\n`;
+    output += `**Additional Focus:** ${focusAreas}\n\n`;
   }
 
-  output += '## Diff\n\n```diff\n' + truncateContent(diffResult.diff!) + '\n```\n\n';
-  output += '---\n\n';
-  output += '## Output Format\n\n';
-  output += 'Structure your review as:\n';
-  output += '1. **Critical Issues** (must fix before merge)\n';
-  output += '2. **Major Issues** (should fix, high impact)\n';
-  output += '3. **Minor Issues** (nice to fix, low impact)\n';
-  output += '4. **Suggestions** (optional improvements)\n\n';
-  output += 'For each issue, provide:\n';
-  output += '- File path and line number\n';
-  output += '- Severity level (Critical/Major/Minor)\n';
-  output += '- Clear description of the problem\n';
-  output += '- Recommended fix or mitigation\n';
+  output += '## Diff\n\n```diff\n' + truncateContent(diffResult.diff!) + '\n```\n';
 
   return success(output);
 }

@@ -1,17 +1,19 @@
-# DiffPilot TypeScript
+# DiffPilot v2.0.0
 
 **Local AI Code Review for GitHub Copilot, Claude, and AI Assistants**
 
 > 🔌 MCP Server - TypeScript/Node.js Implementation  
-> ⚡ No .NET required - Just Node.js 18+
+> ⚡ Node.js 18+ required
 
 ---
 
-## 💡 What Does DiffPilot Do?
+## 💡 Why DiffPilot?
 
-1. **Self-Review Before PR** - After your last commit, run AI code review locally before pushing
-2. **Reviewer Workflow** - Checkout any branch and get AI-assisted code review
-3. **Auto Branch Detection** - No need to specify base branch - DiffPilot finds it
+| 🔍 **Self-Review** | 👀 **Code Review** | 🎯 **Auto Detection** |
+|:------------------:|:------------------:|:---------------------:|
+| Review your own changes before pushing | Checkout any branch and review | No need to specify base branch |
+
+**Stop pushing code blindly.** Get AI-powered feedback on your changes *before* creating a PR.
 
 ---
 
@@ -53,34 +55,32 @@ Add to your MCP settings (Claude Desktop, etc.):
 ## 🚀 Quick Start
 
 ```
-# Review my changes (auto-detects main/master/develop)
-@workspace #review_pr_changes
+# Review local changes (staged first, then unstaged)
+@workspace #check_changes
 
-# Review with focus
-@workspace #review_pr_changes focus on security
+# Review branch diff vs main
+@workspace #review_code
 
 # Generate commit message
-@workspace #generate_commit_message
+@workspace #create_commit_message
 
 # Scan for secrets
-@workspace #scan_secrets
+@workspace #find_secrets
 ```
 
 ---
 
-## 🛠️ 9 MCP Tools
+## 🛠️ 7 MCP Tools
 
 | Tool | Description |
 |------|-------------|
-| `get_pr_diff` | Get raw diff between branches |
-| `review_pr_changes` | Diff with AI review instructions |
-| `generate_pr_title` | Conventional PR title |
-| `generate_pr_description` | Full PR description with checklist |
-| `generate_commit_message` | Commit message from changes |
-| `scan_secrets` | Detect API keys, passwords, tokens |
-| `diff_stats` | Change statistics by file |
-| `suggest_tests` | Recommend test cases |
-| `generate_changelog` | Changelog from commits |
+| `check_changes` | Review local staged/unstaged |
+| `get_diff` | Get branch diff vs main |
+| `review_code` | Review branch diff vs main |
+| `create_pr_title` | Create a PR title |
+| `create_pr_body` | Create PR description |
+| `create_commit_message` | Create commit message |
+| `find_secrets` | Find leaked passwords/keys |
 
 ---
 
@@ -88,8 +88,6 @@ Add to your MCP settings (Claude Desktop, etc.):
 
 - 🔄 **Auto Branch Detection** - Finds `main`, `master`, `develop` automatically
 - 🔐 **Secret Scanning** - Detects API keys, passwords, tokens, JWT, private keys
-- 📊 **Diff Statistics** - Lines added/removed, file breakdown
-- 🧪 **Test Suggestions** - Pattern-based recommendations
 - 🏢 **Enterprise Ready** - Azure DevOps, TFS, air-gapped environments
 - ⚡ **Zero External Dependencies** - Pure TypeScript/Node.js
 
@@ -183,6 +181,17 @@ Choose C# if:
 ## 📄 License
 
 MIT - [Burak Kalafat](https://github.com/bkalafat)
+
+---
+
+## 📋 Version History
+
+| Version | Changes |
+|---------|--------|
+| **2.0.2** | Reduced package size (8MB → 5MB), cleanup unused files |
+| **2.0.1** | Added `check_changes` tool for local staged/unstaged review |
+| **2.0.0** | Renamed tools, simplified descriptions, removed 3 unused tools |
+| **1.x** | Initial release with 9 MCP tools |
 
 ---
 

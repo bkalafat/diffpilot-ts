@@ -16,6 +16,7 @@ vi.mock('../src/git/git-service.js', () => ({
 }));
 
 import {
+  checkChanges,
   generateCommitMessage,
   scanSecrets,
   diffStats,
@@ -33,6 +34,43 @@ describe('Developer Tools', () => {
     vi.clearAllMocks();
     mockGetCurrentBranch.mockResolvedValue('feature-branch');
     mockFindBaseBranch.mockResolvedValue({ baseBranch: 'main', remote: 'origin' });
+  });
+
+  describe('checkChanges', () => {
+    it('should return staged changes when available', async () => {
+      mockRunGitCommand
+        .mockResolvedValueOnce({ exitCode: 0, output: 'file.ts | 5 +' }) // staged stat
+        .mockResolvedValueOnce({ exitCode: 0, output: '+new code line' }); // staged diff
+
+      const result = await checkChanges();
+
+      expect(result.isError).toBeFalsy();
+      expect(result.content[0].text).toContain('Staged changes');
+      expect(result.content[0].text).toContain('Report ONLY issues');
+    });
+
+    it('should fall back to unstaged when no staged changes', async () => {
+      mockRunGitCommand
+        .mockResolvedValueOnce({ exitCode: 0, output: '' }) // no staged
+        .mockResolvedValueOnce({ exitCode: 0, output: 'file.ts | 3 +' }) // unstaged stat
+        .mockResolvedValueOnce({ exitCode: 0, output: '+unstaged code' }); // unstaged diff
+
+      const result = await checkChanges();
+
+      expect(result.isError).toBeFalsy();
+      expect(result.content[0].text).toContain('Unstaged changes');
+    });
+
+    it('should return clean message when no changes', async () => {
+      mockRunGitCommand
+        .mockResolvedValueOnce({ exitCode: 0, output: '' }) // no staged
+        .mockResolvedValueOnce({ exitCode: 0, output: '' }); // no unstaged
+
+      const result = await checkChanges();
+
+      expect(result.isError).toBeFalsy();
+      expect(result.content[0].text).toContain('No local changes');
+    });
   });
 
   describe('generateCommitMessage', () => {

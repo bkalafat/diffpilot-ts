@@ -35,15 +35,13 @@ export async function activate(context: vscode.ExtensionContext) {
     
     // Register commands (these are for manual invocation - MCP tools work automatically via Copilot)
     const commands = [
-        { id: 'diffpilot.getPrDiff', tool: 'get_pr_diff' },
-        { id: 'diffpilot.reviewPrChanges', tool: 'review_pr_changes' },
-        { id: 'diffpilot.generatePrTitle', tool: 'generate_pr_title' },
-        { id: 'diffpilot.generatePrDescription', tool: 'generate_pr_description' },
-        { id: 'diffpilot.generateCommitMessage', tool: 'generate_commit_message' },
-        { id: 'diffpilot.scanSecrets', tool: 'scan_secrets' },
-        { id: 'diffpilot.getDiffStats', tool: 'diff_stats' },
-        { id: 'diffpilot.suggestTests', tool: 'suggest_tests' },
-        { id: 'diffpilot.generateChangelog', tool: 'generate_changelog' },
+        { id: 'diffpilot.checkChanges', tool: 'check_changes' },
+        { id: 'diffpilot.getDiff', tool: 'get_diff' },
+        { id: 'diffpilot.reviewCode', tool: 'review_code' },
+        { id: 'diffpilot.createPrTitle', tool: 'create_pr_title' },
+        { id: 'diffpilot.createPrBody', tool: 'create_pr_body' },
+        { id: 'diffpilot.createCommitMessage', tool: 'create_commit_message' },
+        { id: 'diffpilot.findSecrets', tool: 'find_secrets' },
     ];
 
     for (const cmd of commands) {

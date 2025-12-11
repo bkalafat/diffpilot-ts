@@ -88,7 +88,7 @@ describe('PR Review Tools', () => {
       const result = await reviewPrChanges({});
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('CRITICAL REVIEW MODE');
+      expect(result.content[0].text).toContain('Report ONLY issues');
     });
 
     it('should include focus areas when provided', async () => {

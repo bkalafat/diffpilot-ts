@@ -30,6 +30,64 @@ export interface GenerateCommitMessageParams {
   includeBody?: boolean;
 }
 
+// ============================================================================
+// Tool: check_changes
+// ============================================================================
+
+/**
+ * Checks local changes (staged first, then unstaged) and returns diff with review instructions.
+ * Automatically detects what to review - no parameters needed.
+ */
+export async function checkChanges(): Promise<ToolResult> {
+  const repoDir = getWorkingDirectory();
+
+  // Check staged first
+  const stagedStat = await runGitCommand('diff --cached --stat', repoDir);
+  const hasStaged = stagedStat.exitCode === 0 && stagedStat.output.trim();
+
+  let diffOutput: string;
+  let changeType: string;
+  let icon: string;
+
+  if (hasStaged) {
+    const stagedDiff = await runGitCommand('diff --cached', repoDir);
+    if (stagedDiff.exitCode !== 0) {
+      return gitError('Failed to get staged diff', stagedDiff.output);
+    }
+    diffOutput = stagedDiff.output;
+    changeType = 'Staged changes';
+    icon = '📦';
+  } else {
+    // Check unstaged
+    const unstagedStat = await runGitCommand('diff --stat', repoDir);
+    if (unstagedStat.exitCode !== 0 || !unstagedStat.output.trim()) {
+      return success('✅ No local changes found. Working directory is clean.');
+    }
+
+    const unstagedDiff = await runGitCommand('diff', repoDir);
+    if (unstagedDiff.exitCode !== 0) {
+      return gitError('Failed to get unstaged diff', unstagedDiff.output);
+    }
+    diffOutput = unstagedDiff.output;
+    changeType = 'Unstaged changes';
+    icon = '📝';
+  }
+
+  if (!diffOutput.trim()) {
+    return success('✅ No changes detected.');
+  }
+
+  // Build output with review instructions
+  let output = `${icon} **${changeType}**\n\n`;
+  output += '```diff\n' + truncateContent(diffOutput, 80000) + '\n```\n\n';
+  output += '---\n\n';
+  output += '**Review this diff. Report ONLY issues:**\n\n';
+  output += '`file:line` - [issue] → [suggestion]\n\n';
+  output += '*Skip praise. Focus on bugs, security, performance.*\n';
+
+  return success(output);
+}
+
 /** Change analysis result */
 interface ChangeAnalysis {
   filesChanged: number;

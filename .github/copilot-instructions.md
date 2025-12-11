@@ -22,8 +22,8 @@ diffpilot-ts/
 │   ├── security/
 │   │   └── security-helpers.ts # Input validation, rate limiting, secret detection
 │   └── tools/
-│       ├── pr-review.ts      # PR review tools (get_pr_diff, review_pr_changes, etc.)
-│       ├── developer.ts      # Developer tools (commit message, changelog, tests)
+│       ├── pr-review.ts      # PR review tools (get_diff, review_code, etc.)
+│       ├── developer.ts      # Developer tools (create_commit_message, find_secrets)
 │       └── types.ts          # Shared types and result helpers
 ├── tests/                    # Vitest test files
 ├── vscode-extension/         # VS Code Extension wrapper
@@ -35,21 +35,19 @@ diffpilot-ts/
 └── vitest.config.ts
 ```
 
-## 9 MCP Tools
+## 7 MCP Tools
 
 The server provides these tools:
 
 | Tool | Purpose | File |
 |------|---------|------|
-| `get_pr_diff` | Get raw diff between branches | `src/tools/pr-review.ts` |
-| `review_pr_changes` | Diff with AI review instructions | `src/tools/pr-review.ts` |
-| `generate_pr_title` | Generate conventional PR title | `src/tools/pr-review.ts` |
-| `generate_pr_description` | Full PR description with checklist | `src/tools/pr-review.ts` |
-| `generate_commit_message` | Commit message from staged/unstaged changes | `src/tools/developer.ts` |
-| `scan_secrets` | Detect API keys, passwords, tokens | `src/tools/developer.ts` |
-| `diff_stats` | Change statistics by file | `src/tools/developer.ts` |
-| `suggest_tests` | Recommend test cases for changed code | `src/tools/developer.ts` |
-| `generate_changelog` | Generate changelog from commits | `src/tools/developer.ts` |
+| `check_changes` | Review local staged/unstaged | `src/tools/developer.ts` |
+| `get_diff` | Get branch diff vs main | `src/tools/pr-review.ts` |
+| `review_code` | Review branch diff vs main | `src/tools/pr-review.ts` |
+| `create_pr_title` | Create a PR title | `src/tools/pr-review.ts` |
+| `create_pr_body` | Create PR description text | `src/tools/pr-review.ts` |
+| `create_commit_message` | Create commit message | `src/tools/developer.ts` |
+| `find_secrets` | Find leaked passwords or keys | `src/tools/developer.ts` |
 
 ## Coding Standards
 

@@ -2,7 +2,7 @@
   "name": "diffpilot",
   "displayName": "DiffPilot - MCP Server for Code Review",
   "description": "Local AI code review before you push. Auto branch detection, secret scanning, commit messages. Works with GitHub Copilot, Claude, Azure DevOps.",
-  "version": "1.3.0",
+  "version": "2.0.2",
   "publisher": "BurakKalafat",
   "author": {
     "name": "Burak Kalafat",
@@ -70,99 +70,82 @@
     ],
     "commands": [
       {
-        "command": "diffpilot.getPrDiff",
-        "title": "DiffPilot: Get PR Diff",
+        "command": "diffpilot.checkChanges",
+        "title": "DiffPilot: Check Changes",
         "category": "DiffPilot"
       },
       {
-        "command": "diffpilot.reviewPrChanges",
-        "title": "DiffPilot: Review PR Changes",
+        "command": "diffpilot.getDiff",
+        "title": "DiffPilot: Get Diff",
         "category": "DiffPilot"
       },
       {
-        "command": "diffpilot.generatePrTitle",
-        "title": "DiffPilot: Generate PR Title",
+        "command": "diffpilot.reviewCode",
+        "title": "DiffPilot: Review Code",
         "category": "DiffPilot"
       },
       {
-        "command": "diffpilot.generatePrDescription",
-        "title": "DiffPilot: Generate PR Description",
+        "command": "diffpilot.createPrTitle",
+        "title": "DiffPilot: Create PR Title",
         "category": "DiffPilot"
       },
       {
-        "command": "diffpilot.generateCommitMessage",
-        "title": "DiffPilot: Generate Commit Message",
+        "command": "diffpilot.createPrBody",
+        "title": "DiffPilot: Create PR Body",
         "category": "DiffPilot"
       },
       {
-        "command": "diffpilot.scanSecrets",
-        "title": "DiffPilot: Scan for Secrets",
+        "command": "diffpilot.createCommitMessage",
+        "title": "DiffPilot: Create Commit Message",
         "category": "DiffPilot"
       },
       {
-        "command": "diffpilot.getDiffStats",
-        "title": "DiffPilot: Get Diff Statistics",
-        "category": "DiffPilot"
-      },
-      {
-        "command": "diffpilot.suggestTests",
-        "title": "DiffPilot: Suggest Tests",
-        "category": "DiffPilot"
-      },
-      {
-        "command": "diffpilot.generateChangelog",
-        "title": "DiffPilot: Generate Changelog",
+        "command": "diffpilot.findSecrets",
+        "title": "DiffPilot: Find Secrets",
         "category": "DiffPilot"
       }
     ],
     "menus": {
       "scm/title": [
         {
-          "command": "diffpilot.generateCommitMessage",
+          "command": "diffpilot.checkChanges",
+          "group": "diffpilot@0",
+          "when": "scmProvider == git"
+        },
+        {
+          "command": "diffpilot.createCommitMessage",
           "group": "diffpilot@1",
           "when": "scmProvider == git"
         },
         {
-          "command": "diffpilot.scanSecrets",
+          "command": "diffpilot.findSecrets",
           "group": "diffpilot@2",
           "when": "scmProvider == git"
         }
       ],
       "commandPalette": [
         {
-          "command": "diffpilot.getPrDiff",
+          "command": "diffpilot.getDiff",
           "when": "gitOpenRepositoryCount > 0"
         },
         {
-          "command": "diffpilot.reviewPrChanges",
+          "command": "diffpilot.reviewCode",
           "when": "gitOpenRepositoryCount > 0"
         },
         {
-          "command": "diffpilot.generatePrTitle",
+          "command": "diffpilot.createPrTitle",
           "when": "gitOpenRepositoryCount > 0"
         },
         {
-          "command": "diffpilot.generatePrDescription",
+          "command": "diffpilot.createPrBody",
           "when": "gitOpenRepositoryCount > 0"
         },
         {
-          "command": "diffpilot.generateCommitMessage",
+          "command": "diffpilot.createCommitMessage",
           "when": "gitOpenRepositoryCount > 0"
         },
         {
-          "command": "diffpilot.scanSecrets",
-          "when": "gitOpenRepositoryCount > 0"
-        },
-        {
-          "command": "diffpilot.getDiffStats",
-          "when": "gitOpenRepositoryCount > 0"
-        },
-        {
-          "command": "diffpilot.suggestTests",
-          "when": "gitOpenRepositoryCount > 0"
-        },
-        {
-          "command": "diffpilot.generateChangelog",
+          "command": "diffpilot.findSecrets",
           "when": "gitOpenRepositoryCount > 0"
         }
       ]

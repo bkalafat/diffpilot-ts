@@ -5,6 +5,29 @@ All notable changes to the DiffPilot extension will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2025-12-11
+
+### Changed
+- Reduced package size from 8MB to 5MB
+- Removed unused files and images from VSIX
+- Added `.vscodeignore` rules for node_modules cleanup
+
+## [2.0.1] - 2025-12-11
+
+### Added
+- New `check_changes` tool for reviewing local staged/unstaged changes
+- Simplified review output format: `file:line` - [severity] [issue] → [suggestion]
+
+### Changed
+- Renamed tools for clarity (e.g., `get_pr_diff` → `get_diff`, `review_pr_changes` → `review_code`)
+- Shortened tool descriptions to ~5 words each
+- Streamlined review instructions output
+
+### Removed
+- `diff_stats` tool (unused)
+- `suggest_tests` tool (unused)
+- `generate_changelog` tool (unused)
+
 ## [2.0.0] - 2025-12-10
 
 ### Added

@@ -17,3 +17,23 @@ build-server.js
 server/src
 server/*.ts
 server/node_modules/.package-lock.json
+
+# Cleanup node_modules (safe to remove)
+server/node_modules/**/*.map
+server/node_modules/**/*.md
+server/node_modules/**/*.txt
+server/node_modules/**/README*
+server/node_modules/**/CHANGELOG*
+server/node_modules/**/HISTORY*
+server/node_modules/**/LICENSE*
+server/node_modules/**/license*
+server/node_modules/**/.eslintrc*
+server/node_modules/**/.npmignore
+server/node_modules/**/.travis.yml
+server/node_modules/**/.editorconfig
+server/node_modules/**/test/
+server/node_modules/**/tests/
+server/node_modules/**/__tests__/
+server/node_modules/**/docs/
+server/node_modules/**/example/
+server/node_modules/**/examples/
