@@ -1,35 +1,127 @@
-# DiffPilot v2.0.0
+# DiffPilot
 
-**Local AI Code Review for GitHub Copilot, Claude, and AI Assistants**
+**Review your code before creating a PR. 100% local.**
 
-> 🔌 MCP Server - TypeScript/Node.js Implementation  
-> ⚡ Node.js 18+ required
+Catch bugs, security issues, and code smells *before* they reach your team. DiffPilot brings AI-powered code review directly into your workflow—no cloud uploads, no waiting.
+
+![DiffPilot](https://raw.githubusercontent.com/bkalafat/DiffPilot-TS/main/vscode-extension/images/diffpilot.png)
 
 ---
 
-## 💡 Why DiffPilot?
+## Why DiffPilot?
+
+> "I wish I had reviewed that before pushing..."
+
+We've all been there. DiffPilot solves this by making self-review **instant** and **automatic**.
 
 | 🔍 **Self-Review** | 👀 **Code Review** | 🎯 **Auto Detection** |
 |:------------------:|:------------------:|:---------------------:|
 | Review your own changes before pushing | Checkout any branch and review | No need to specify base branch |
 
-**Stop pushing code blindly.** Get AI-powered feedback on your changes *before* creating a PR.
+**Stop pushing code blindly.** Get AI-powered feedback *before* creating a PR.
 
 ---
 
-## 📦 Installation
+## Features
+
+✅ **Local Code Review** — AI reviews your uncommitted changes instantly  
+✅ **Branch Diff Analysis** — Compare any branch against main/master  
+✅ **Secret Detection** — Catch API keys, passwords, tokens before commit  
+✅ **Commit Messages** — Generate conventional commit messages automatically  
+✅ **PR Generation** — Create PR titles and descriptions from your changes  
+✅ **Zero Config** — Auto-detects base branch (main, master, develop)  
+✅ **Enterprise Ready** — Works with Azure DevOps, TFS, air-gapped environments  
+✅ **100% Local** — No cloud, no uploads, your code stays on your machine  
+
+---
+
+## Quick Start
+
+Just ask your AI assistant:
+
+```
+# Review local changes (staged first, then unstaged)
+@workspace #check_changes
+
+# Review branch diff against main
+@workspace #review_code
+
+# Generate a commit message
+@workspace #create_commit_message
+
+# Check for leaked secrets
+@workspace #find_secrets
+```
+
+---
+
+## MCP Tools
+
+DiffPilot provides 7 powerful MCP tools for GitHub Copilot, Claude, and other AI assistants:
+
+| Tool | What it does |
+|------|--------------|
+| `#check_changes` | Review your local staged/unstaged changes |
+| `#get_diff` | Get the diff between your branch and main |
+| `#review_code` | AI code review with issue detection |
+| `#create_pr_title` | Generate a PR title from your changes |
+| `#create_pr_body` | Create a complete PR description |
+| `#create_commit_message` | Generate conventional commit messages |
+| `#find_secrets` | Detect leaked API keys, passwords, tokens |
+
+---
+
+## Use Cases
+
+### 🔍 Self-Review Before PR
+
+```
+# After finishing your work, before creating a PR:
+@workspace #check_changes
+
+# AI finds issues → you fix locally → then push
+```
+
+### 👀 Code Reviewer Workflow
+
+```bash
+git checkout feature/user-authentication
+```
+```
+@workspace #review_code focus on security
+```
+
+### 🔐 Pre-Commit Secret Check
+
+```
+@workspace #find_secrets
+
+# Catches API keys, passwords, JWT tokens before commit
+```
+
+### 📝 Quick Commit Message
+
+```
+@workspace #create_commit_message
+
+# Generates: feat(auth): add JWT token validation
+```
+
+---
+
+## Installation
 
 ### VS Code Extension (Recommended)
 
 Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=BurakKalafat.diffpilot)
 
-### npm (Global)
+### npm
 
 ```bash
 npm install -g diffpilot
 ```
 
-### npx (Direct Usage)
+### npx (No install)
 
 ```bash
 npx diffpilot
@@ -37,7 +129,7 @@ npx diffpilot
 
 ### Manual MCP Configuration
 
-Add to your MCP settings (Claude Desktop, etc.):
+For Claude Desktop or other MCP clients:
 
 ```json
 {
@@ -52,151 +144,55 @@ Add to your MCP settings (Claude Desktop, etc.):
 
 ---
 
-## 🚀 Quick Start
+## Requirements
 
-```
-# Review local changes (staged first, then unstaged)
-@workspace #check_changes
-
-# Review branch diff vs main
-@workspace #review_code
-
-# Generate commit message
-@workspace #create_commit_message
-
-# Scan for secrets
-@workspace #find_secrets
-```
+- **VS Code** 1.101+
+- **Node.js** 18+
+- **Git**
 
 ---
 
-## 🛠️ 7 MCP Tools
+## Settings
 
-| Tool | Description |
-|------|-------------|
-| `check_changes` | Review local staged/unstaged |
-| `get_diff` | Get branch diff vs main |
-| `review_code` | Review branch diff vs main |
-| `create_pr_title` | Create a PR title |
-| `create_pr_body` | Create PR description |
-| `create_commit_message` | Create commit message |
-| `find_secrets` | Find leaked passwords/keys |
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `diffpilot.nodePath` | `node` | Path to Node.js executable |
+| `diffpilot.serverPath` | (bundled) | Custom MCP server path |
 
 ---
 
-## ✨ Key Features
+## How It Works
 
-- 🔄 **Auto Branch Detection** - Finds `main`, `master`, `develop` automatically
-- 🔐 **Secret Scanning** - Detects API keys, passwords, tokens, JWT, private keys
-- 🏢 **Enterprise Ready** - Azure DevOps, TFS, air-gapped environments
-- ⚡ **Zero External Dependencies** - Pure TypeScript/Node.js
+1. **You make changes** to your code
+2. **Ask AI** to review with `#check_changes` or `#review_code`
+3. **DiffPilot** fetches the git diff and sends to your AI assistant
+4. **AI analyzes** and reports issues in `file:line` format
+5. **You fix** issues locally before pushing
 
----
-
-## 📁 Project Structure
-
-```
-diffpilot-ts/
-├── src/
-│   ├── index.ts           # MCP Server entry point
-│   ├── git/               # Git operations
-│   │   └── git-service.ts
-│   ├── security/          # Security helpers
-│   │   └── security-helpers.ts
-│   ├── tools/             # MCP tool implementations
-│   │   ├── pr-review.ts   # PR review tools
-│   │   ├── developer.ts   # Developer tools
-│   │   └── types.ts       # Shared types
-│   └── utils/             # Utilities
-├── tests/                 # Vitest tests
-├── vscode-extension/      # VS Code Extension
-│   ├── src/
-│   │   └── extension.ts
-│   ├── images/
-│   └── package.json
-├── package.json
-├── tsconfig.json
-└── vitest.config.ts
-```
+All processing happens locally. Your code never leaves your machine.
 
 ---
 
-## 🔧 Development
-
-### Prerequisites
-
-- Node.js 18+
-- Git
-
-### Setup
-
-```bash
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Run tests
-npm test
-
-# Run in development
-npm run dev
-```
-
-### Build Extension
-
-```bash
-cd vscode-extension
-npm install
-npm run package
-```
-
-This creates `diffpilot-2.0.0.vsix` in the vscode-extension folder.
-
----
-
-## 🆚 C# vs TypeScript Version
-
-| Feature | C# (.NET 9) | TypeScript (Node.js) |
-|---------|-------------|---------------------|
-| Runtime | .NET 9 SDK | Node.js 18+ |
-| Startup | Slower (JIT) | Faster |
-| Binary Size | ~50MB | ~7MB |
-| Dependencies | None | @modelcontextprotocol/sdk |
-| Performance | Excellent | Very Good |
-
-Choose TypeScript if:
-- You don't have .NET SDK installed
-- You want faster startup time
-- You prefer smaller extension size
-
-Choose C# if:
-- You already have .NET 9 SDK
-- You want maximum performance
-- You're in a .NET-heavy environment
-
----
-
-## 📄 License
-
-MIT - [Burak Kalafat](https://github.com/bkalafat)
-
----
-
-## 📋 Version History
+## Version History
 
 | Version | Changes |
-|---------|--------|
-| **2.0.2** | Reduced package size (8MB → 5MB), cleanup unused files |
-| **2.0.1** | Added `check_changes` tool for local staged/unstaged review |
-| **2.0.0** | Renamed tools, simplified descriptions, removed 3 unused tools |
-| **1.x** | Initial release with 9 MCP tools |
+|---------|---------|
+| **2.0.4** | Documentation cleanup |
+| **2.0.3** | Privacy & security docs, architecture diagram |
+| **2.0.2** | Reduced package size (8MB → 5MB) |
+| **2.0.1** | Added `check_changes` for local review |
+| **2.0.0** | Initial release with 7 MCP tools |
 
 ---
 
-## 🔗 Links
+## Links
 
-- **VS Code Marketplace**: [DiffPilot Extension](https://marketplace.visualstudio.com/items?itemName=BurakKalafat.diffpilot)
-- **C# Version**: [DiffPilot (C#)](https://github.com/bkalafat/DiffPilot)
-- **Issues**: [GitHub Issues](https://github.com/bkalafat/DiffPilot-TS/issues)
+- 📦 [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=BurakKalafat.diffpilot)
+- 🐙 [GitHub](https://github.com/bkalafat/DiffPilot-TS)
+- 🐛 [Report Issues](https://github.com/bkalafat/DiffPilot-TS/issues)
+
+---
+
+## License
+
+MIT © [Burak Kalafat](https://github.com/bkalafat)

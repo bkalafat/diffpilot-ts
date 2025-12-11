@@ -1,135 +1,210 @@
-# DiffPilot - Local AI Code Review
+# DiffPilot
 
-**Review your code before creating a PR. 100% local.**
+**AI code review that runs entirely on your machine.**
 
-> 🔌 MCP Server for GitHub Copilot, Claude, and AI assistants  
-> ⚡ TypeScript/Node.js implementation - No external dependencies required!
+Catch bugs, security issues, and code smells *before* they reach your team. DiffPilot is an MCP server that brings AI-powered code review directly into VS Code—with complete privacy.
 
----
-
-## 💡 What Does DiffPilot Do?
-
-1. **Self-Review Before PR** - After your last commit, run AI code review locally before pushing
-2. **Reviewer Workflow** - Checkout any branch and get AI-assisted code review
-3. **Auto Branch Detection** - No need to specify base branch - DiffPilot finds it
+![DiffPilot](https://raw.githubusercontent.com/bkalafat/DiffPilot-TS/main/vscode-extension/images/diffpilot.png)
 
 ---
 
-## 🚀 Quick Start
+## How It Works
 
 ```
-# Review my changes (auto-detects main/master/develop)
-@workspace #review_pr_changes
+You write code → Ask AI to review → DiffPilot reads your local git diff → AI analyzes → You fix issues
+```
 
-# Review with focus
-@workspace #review_pr_changes focus on security
+**Everything happens on your workstation.** DiffPilot uses standard `git diff` commands to read your changes, then passes them to your AI assistant (GitHub Copilot, Claude, etc.) for analysis. No external servers, no uploads, no network calls.
 
-# Generate commit message
-@workspace #generate_commit_message
+---
 
-# Scan for secrets
-@workspace #scan_secrets
+## Why DiffPilot?
+
+| Traditional Code Review | With DiffPilot |
+|------------------------|----------------|
+| Push first, review later | Review before pushing |
+| Wait for teammates | Instant AI feedback |
+| Issues found in PR | Issues fixed locally |
+| Code visible on servers | Code stays on your machine |
+
+---
+
+## Quick Start
+
+Open GitHub Copilot Chat and try:
+
+```
+@workspace #check_changes
+```
+
+That's it. DiffPilot will analyze your uncommitted changes and report issues.
+
+### More Examples
+
+```
+# Review your branch vs main
+@workspace #review_code
+
+# Focus on specific concerns
+@workspace #review_code focus on security and SQL injection
+
+# Generate a commit message
+@workspace #create_commit_message
+
+# Check for accidentally committed secrets
+@workspace #find_secrets
 ```
 
 ---
 
-## 🛠️ 9 MCP Tools
+## 7 MCP Tools
 
-| Tool | Example Prompt |
-|------|----------------|
-| `#get_pr_diff` | "Get diff between branches" |
-| `#review_pr_changes` | "Review my PR for security" |
-| `#generate_pr_title` | "Generate conventional PR title" |
-| `#generate_pr_description` | "Create PR description" |
-| `#generate_commit_message` | "Generate commit message" |
-| `#scan_secrets` | "Check for API keys" |
-| `#diff_stats` | "Show change statistics" |
-| `#suggest_tests` | "What tests to write?" |
-| `#generate_changelog` | "Generate changelog" |
+| Tool | What It Does |
+|------|--------------|
+| `check_changes` | Review local staged/unstaged changes |
+| `get_diff` | Get diff between your branch and base |
+| `review_code` | AI-powered code review with issue detection |
+| `create_pr_title` | Generate PR title from changes |
+| `create_pr_body` | Create complete PR description |
+| `create_commit_message` | Generate conventional commit message |
+| `find_secrets` | Detect API keys, passwords, tokens |
 
 ---
 
-## ✨ Key Features
+## Privacy & Security
 
-- 🔄 **Auto Branch Detection** - Finds `main`, `master`, `develop` automatically
-- 🔐 **Secret Scanning** - Detects API keys, passwords, tokens, JWT
-- 📊 **Diff Statistics** - Lines added/removed, file breakdown
-- 🧪 **Test Suggestions** - Pattern-based recommendations
-- 🏢 **Enterprise Ready** - Azure DevOps, TFS, air-gapped environments
-- ⚡ **Zero External Dependencies** - Pure TypeScript/Node.js, no .NET or Python required
+DiffPilot is designed for environments where code confidentiality matters:
+
+- **Offline Operation** — Works without internet access
+- **No Telemetry** — Zero usage data collection
+- **No External Calls** — Only runs local git commands
+- **Open Source** — Full source code available for audit
+- **Standard Git** — Uses only `git diff`, `git status`, `git branch`
+
+Your source code is read by `git` on your machine, processed locally, and passed to your configured AI assistant. DiffPilot itself does not store, transmit, or log any code content.
+
+> **For Regulated Industries:** DiffPilot is suitable for air-gapped environments, on-premises deployments, and organizations with strict data residency requirements. The extension contains no outbound network code.
 
 ---
 
-## 📋 Use Cases
+## Use Cases
 
 ### Self-Review Before PR
-```
-# After finishing work, before creating PR:
-@workspace #review_pr_changes
 
-# Fix issues locally, then push
+```
+# After finishing your feature:
+@workspace #check_changes
+
+# AI reports issues → You fix locally → Then push clean code
 ```
 
-### Code Reviewer Workflow
+### Security-Focused Review
+
 ```bash
-git checkout feature/user-auth
-# Then in Copilot:
-@workspace #review_pr_changes focus on security
+git checkout feature/payment-integration
+```
+```
+@workspace #review_code focus on security, input validation, and SQL injection
 ```
 
-### Pre-Commit Secret Check
+### Pre-Commit Secret Detection
+
 ```
-@workspace #scan_secrets
-# Catches secrets before commit
+@workspace #find_secrets
+
+# Catches: API keys, AWS credentials, JWT tokens, private keys, passwords
+```
+
+### Automated Commit Messages
+
+```
+@workspace #create_commit_message
+
+# Output: feat(auth): add JWT token refresh with 24h expiry
 ```
 
 ---
 
-## ⚙️ Settings
+## Installation
+
+### From VS Code Marketplace
+
+1. Open VS Code
+2. Go to Extensions (Ctrl+Shift+X)
+3. Search "DiffPilot"
+4. Click Install
+
+### For Other MCP Clients
+
+```json
+{
+  "mcpServers": {
+    "diffpilot": {
+      "command": "npx",
+      "args": ["diffpilot"]
+    }
+  }
+}
+```
+
+---
+
+## Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `diffpilot.defaultBaseBranch` | `main` | Default base branch |
-| `diffpilot.prTitleStyle` | `conventional` | PR title style |
-| `diffpilot.commitMessageStyle` | `conventional` | Commit style |
 | `diffpilot.nodePath` | `node` | Path to Node.js executable |
+| `diffpilot.serverPath` | (bundled) | Custom MCP server path |
 
 ---
 
-## 📦 Requirements
+## Requirements
 
-- VS Code 1.101+
-- Node.js 18+
-- Git
-
-> **Note:** This is the TypeScript implementation. No .NET SDK required!
+- **VS Code** 1.101 or later
+- **Node.js** 18 or later
+- **Git** (any recent version)
 
 ---
 
-## 🆚 C# vs TypeScript Version
+## Architecture
 
-| Feature | C# (.NET 9) | TypeScript (Node.js) |
-|---------|-------------|---------------------|
-| Runtime | .NET 9 SDK | Node.js 18+ |
-| Startup | Slower (JIT) | Faster |
-| Binary Size | Larger | Smaller |
-| Cross-platform | ✅ | ✅ |
-| Dependencies | None | @modelcontextprotocol/sdk |
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   VS Code       │────▶│   DiffPilot     │────▶│   Git CLI       │
+│   + Copilot     │     │   MCP Server    │     │   (local)       │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        │                       │
+        │                       │ stdio (JSON-RPC)
+        ▼                       ▼
+┌─────────────────┐     ┌─────────────────┐
+│   AI Assistant  │◀────│   Diff Output   │
+│   (your choice) │     │   (text only)   │
+└─────────────────┘     └─────────────────┘
+```
 
----
-
-## 📜 Version History
-
-### 2.0.0 (2025-12-10)
-- 🎉 Complete TypeScript/Node.js rewrite
-- ⚡ No .NET dependency required
-- 🔄 Same 9 MCP tools, better performance
-- 📦 Smaller extension size
+DiffPilot communicates with VS Code via MCP (Model Context Protocol) over stdio. It spawns `git` subprocesses to read repository state. All data flows through local pipes—no sockets, no HTTP.
 
 ---
 
-## 📄 License
+## Version History
 
-MIT - [Burak Kalafat](https://github.com/bkalafat)
+| Version | Date | Changes |
+|---------|------|---------|
+| 2.0.4 | 2025-12-11 | Documentation cleanup |
+| 2.0.3 | 2025-12-11 | Privacy & security docs, architecture diagram |
+| 2.0.2 | 2025-12-11 | Reduced package size (8MB → 5MB) |
+| 2.0.1 | 2025-12-11 | Added `check_changes` for local review |
+| 2.0.0 | 2025-12-10 | Initial release with 7 MCP tools |
 
-**[GitHub](https://github.com/bkalafat/DiffPilot-TS)** • **[Marketplace](https://marketplace.visualstudio.com/items?itemName=BurakKalafat.diffpilot)**
+---
+
+## Links
+
+- [Source Code](https://github.com/bkalafat/DiffPilot-TS)
+- [Report Issues](https://github.com/bkalafat/DiffPilot-TS/issues)
+
+---
+
+## License
+
+MIT © [Burak Kalafat](https://github.com/bkalafat)
