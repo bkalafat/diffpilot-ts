@@ -74,40 +74,55 @@ fs.writeFileSync(
 );
 console.log('✅ Server package.json created');
 
-// Step 5: Copy node_modules for dependencies
+// Step 5: Copy node_modules for dependencies (recursively handles all transitive deps)
 const nodeModulesSrc = path.join(ROOT_DIR, 'node_modules');
 const nodeModulesDest = path.join(SERVER_DEST, 'node_modules');
 
+/**
+ * Recursively copy a dependency and all its transitive dependencies
+ */
+function copyDependencyWithTransitive(depName, nodeModulesSrc, nodeModulesDest, copiedDeps = new Set()) {
+    // Avoid circular dependencies and already copied deps
+    if (copiedDeps.has(depName)) {
+        return;
+    }
+    
+    const depSrc = path.join(nodeModulesSrc, depName);
+    const depDest = path.join(nodeModulesDest, depName);
+    
+    if (!fs.existsSync(depSrc)) {
+        return;
+    }
+    
+    // Mark as copied before processing to handle circular deps
+    copiedDeps.add(depName);
+    
+    // Copy the dependency
+    if (!fs.existsSync(depDest)) {
+        copyDir(depSrc, depDest);
+        console.log(`  📦 Copied ${depName}`);
+    }
+    
+    // Recursively copy transitive dependencies
+    const depPackagePath = path.join(depSrc, 'package.json');
+    if (fs.existsSync(depPackagePath)) {
+        const depPackage = JSON.parse(fs.readFileSync(depPackagePath, 'utf8'));
+        const transitiveDeps = Object.keys(depPackage.dependencies || {});
+        
+        for (const transDep of transitiveDeps) {
+            copyDependencyWithTransitive(transDep, nodeModulesSrc, nodeModulesDest, copiedDeps);
+        }
+    }
+}
+
 if (fs.existsSync(nodeModulesSrc)) {
-    // Only copy production dependencies
+    // Only copy production dependencies (and all their transitive deps recursively)
     const deps = Object.keys(serverPackage.dependencies || {});
     fs.mkdirSync(nodeModulesDest, { recursive: true });
     
+    const copiedDeps = new Set();
     for (const dep of deps) {
-        const depSrc = path.join(nodeModulesSrc, dep);
-        const depDest = path.join(nodeModulesDest, dep);
-        
-        if (fs.existsSync(depSrc)) {
-            copyDir(depSrc, depDest);
-            console.log(`  📦 Copied ${dep}`);
-            
-            // Also copy transitive dependencies from the dep's package.json
-            const depPackagePath = path.join(depSrc, 'package.json');
-            if (fs.existsSync(depPackagePath)) {
-                const depPackage = JSON.parse(fs.readFileSync(depPackagePath, 'utf8'));
-                const transitiveDeps = Object.keys(depPackage.dependencies || {});
-                
-                for (const transDep of transitiveDeps) {
-                    const transDepSrc = path.join(nodeModulesSrc, transDep);
-                    const transDepDest = path.join(nodeModulesDest, transDep);
-                    
-                    if (fs.existsSync(transDepSrc) && !fs.existsSync(transDepDest)) {
-                        copyDir(transDepSrc, transDepDest);
-                        console.log(`  📦 Copied ${transDep} (transitive)`);
-                    }
-                }
-            }
-        }
+        copyDependencyWithTransitive(dep, nodeModulesSrc, nodeModulesDest, copiedDeps);
     }
     console.log('✅ Dependencies copied');
 }
