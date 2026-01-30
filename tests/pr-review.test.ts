@@ -16,6 +16,8 @@ vi.mock('../src/git/git-service.js', () => ({
     if (!name) return false;
     return /^[a-zA-Z0-9/_-]+$/.test(name) && !name.includes('..');
   }),
+  isDefaultBranch: vi.fn(() => Promise.resolve(false)),
+  getUnpushedCommitCount: vi.fn(() => Promise.resolve(0)),
 }));
 
 import {

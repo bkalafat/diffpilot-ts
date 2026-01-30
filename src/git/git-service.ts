@@ -103,6 +103,41 @@ export async function getUpstreamBranch(
 }
 
 /**
+ * Checks if the given branch is the default branch (main/master/develop).
+ * Returns true if the branch matches the repository's default branch.
+ */
+export async function isDefaultBranch(
+  workingDirectory: string,
+  branch: string,
+  remote: string = 'origin'
+): Promise<boolean> {
+  const defaultBranch = await getDefaultBranch(workingDirectory, remote);
+  return defaultBranch !== null && branch === defaultBranch;
+}
+
+/**
+ * Checks if the current branch has unpushed commits compared to its remote.
+ * Returns the count of unpushed commits, or 0 if none/error.
+ */
+export async function getUnpushedCommitCount(
+  workingDirectory: string,
+  branch: string,
+  remote: string = 'origin'
+): Promise<number> {
+  const result = await runGitCommand(
+    `rev-list --count ${remote}/${branch}..${branch}`,
+    workingDirectory
+  );
+  
+  if (result.exitCode !== 0) {
+    return 0;
+  }
+  
+  const count = parseInt(result.output.trim(), 10);
+  return isNaN(count) ? 0 : count;
+}
+
+/**
  * Gets the default branch for the repository using symbolic-ref.
  * Tries to get the default branch from the remote's HEAD.
  */

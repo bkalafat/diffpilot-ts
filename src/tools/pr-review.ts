@@ -16,6 +16,8 @@ import {
   findBaseBranch,
   isValidBranchName,
   getWorkingDirectory,
+  isDefaultBranch,
+  getUnpushedCommitCount,
   type BranchInfo,
 } from '../git/git-service.js';
 import { success, error, gitError, truncateContent, type ToolResult } from './types.js';
@@ -32,6 +34,7 @@ interface ExtractedBranches {
   baseBranch: string;
   featureBranch: string;
   remote: string;
+  isOnDefaultBranch?: boolean;
   error?: ToolResult;
 }
 
@@ -65,6 +68,37 @@ async function extractBranchParameters(
 
   // Auto-detect base branch if not provided
   if (!baseBranch) {
+    // Check if we're on the default branch (main/master/develop)
+    const onDefaultBranch = await isDefaultBranch(repoDir, featureBranch, remote);
+    
+    if (onDefaultBranch) {
+      // User is on main - check for unpushed commits to compare against remote
+      const unpushedCount = await getUnpushedCommitCount(repoDir, featureBranch, remote);
+      
+      if (unpushedCount > 0) {
+        // Compare local main to remote main (unpushed commits)
+        return {
+          baseBranch: featureBranch, // Will use origin/main...main
+          featureBranch,
+          remote,
+          isOnDefaultBranch: true,
+        };
+      } else {
+        return {
+          baseBranch: '',
+          featureBranch: '',
+          remote,
+          error: error(
+            `You are on the '${featureBranch}' branch with no unpushed commits. ` +
+              'Either:\n' +
+              '  1. Create a feature branch: `git checkout -b feature/my-feature`\n' +
+              '  2. Make and stage changes to review with `check_changes`\n' +
+              "  3. Specify a 'baseBranch' to compare against a different branch"
+          ),
+        };
+      }
+    }
+    
     const baseInfo = await findBaseBranch(repoDir, featureBranch, remote);
     if (baseInfo) {
       remote = baseInfo.remote;
@@ -110,19 +144,25 @@ async function extractBranchParameters(
     };
   }
 
-  return { baseBranch, featureBranch, remote };
+  return { baseBranch, featureBranch, remote, isOnDefaultBranch: false };
 }
 
 /**
  * Gets the diff between base and feature branches.
+ * When isOnDefaultBranch is true, compares local branch to its remote tracking branch.
  */
 async function getDiff(
   repoDir: string,
   remote: string,
   baseBranch: string,
-  featureBranch: string
+  featureBranch: string,
+  isOnDefaultBranch: boolean = false
 ): Promise<{ diff?: string; error?: ToolResult }> {
-  const diffArgs = `diff ${remote}/${baseBranch}...${featureBranch}`;
+  // When on default branch, compare local to remote (unpushed commits)
+  // Use '..' for linear comparison instead of '...' for merge-base comparison
+  const diffArgs = isOnDefaultBranch
+    ? `diff ${remote}/${featureBranch}..${featureBranch}`
+    : `diff ${remote}/${baseBranch}...${featureBranch}`;
   const diffResult = await runGitCommand(diffArgs, repoDir);
 
   if (diffResult.exitCode !== 0) {
@@ -156,7 +196,7 @@ export async function getPrDiff(args?: GetPrDiffParams): Promise<ToolResult> {
     return branches.error;
   }
 
-  const { baseBranch, featureBranch, remote } = branches;
+  const { baseBranch, featureBranch, remote, isOnDefaultBranch } = branches;
 
   // Fetch latest
   const fetchResult = await runGitCommand(`fetch ${remote}`, repoDir);
@@ -165,15 +205,17 @@ export async function getPrDiff(args?: GetPrDiffParams): Promise<ToolResult> {
   }
 
   // Generate diff
-  const diffResult = await getDiff(repoDir, remote, baseBranch, featureBranch);
+  const diffResult = await getDiff(repoDir, remote, baseBranch, featureBranch, isOnDefaultBranch);
   if (diffResult.error) {
     return diffResult.error;
   }
 
   // Return diff content
-  const header =
-    `## Diff: ${remote}/${baseBranch} → ${featureBranch}\n\n` +
-    `Comparing \`${remote}/${baseBranch}...${featureBranch}\`\n\n`;
+  const header = isOnDefaultBranch
+    ? `## Diff: Unpushed commits on \`${featureBranch}\`\n\n` +
+      `Comparing \`${remote}/${featureBranch}..${featureBranch}\` (local vs remote)\n\n`
+    : `## Diff: ${remote}/${baseBranch} → ${featureBranch}\n\n` +
+      `Comparing \`${remote}/${baseBranch}...${featureBranch}\`\n\n`;
 
   const diffContent = truncateContent(diffResult.diff!);
 
@@ -202,7 +244,7 @@ export async function reviewPrChanges(args?: ReviewPrChangesParams): Promise<Too
     return branches.error;
   }
 
-  const { baseBranch, featureBranch, remote } = branches;
+  const { baseBranch, featureBranch, remote, isOnDefaultBranch } = branches;
   const focusAreas = args?.focusAreas;
 
   // Fetch latest
@@ -212,20 +254,25 @@ export async function reviewPrChanges(args?: ReviewPrChangesParams): Promise<Too
   }
 
   // Generate diff
-  const diffResult = await getDiff(repoDir, remote, baseBranch, featureBranch);
+  const diffResult = await getDiff(repoDir, remote, baseBranch, featureBranch, isOnDefaultBranch);
   if (diffResult.error) {
     return diffResult.error;
   }
 
   // Get file stats for context
+  const statsDiffRef = isOnDefaultBranch
+    ? `${remote}/${featureBranch}..${featureBranch}`
+    : `${remote}/${baseBranch}...${featureBranch}`;
   const statsResult = await runGitCommand(
-    `diff --stat ${remote}/${baseBranch}...${featureBranch}`,
+    `diff --stat ${statsDiffRef}`,
     repoDir
   );
 
   // Build review prompt
   let output = '# Code Review Request\n\n';
-  output += `**Branch:** \`${featureBranch}\` → \`${baseBranch}\`\n\n`;
+  output += isOnDefaultBranch
+    ? `**Branch:** \`${featureBranch}\` (unpushed commits)\n\n`
+    : `**Branch:** \`${featureBranch}\` → \`${baseBranch}\`\n\n`;
 
   if (statsResult.exitCode === 0 && statsResult.output.trim()) {
     output += '## Change Summary\n```\n' + statsResult.output.trim() + '\n```\n\n';
@@ -361,7 +408,7 @@ export async function generatePrDescription(args?: GeneratePrDescriptionParams):
     return branches.error;
   }
 
-  const { baseBranch, featureBranch, remote } = branches;
+  const { baseBranch, featureBranch, remote, isOnDefaultBranch } = branches;
   const includeChecklist = args?.includeChecklist ?? true;
   const ticketUrl = args?.ticketUrl;
 
@@ -371,18 +418,25 @@ export async function generatePrDescription(args?: GeneratePrDescriptionParams):
     return gitError('git fetch failed', fetchResult.output);
   }
 
-  // Get various context
+  // Get various context - use appropriate diff reference
+  const diffRef = isOnDefaultBranch
+    ? `${remote}/${featureBranch}..${featureBranch}`
+    : `${remote}/${baseBranch}...${featureBranch}`;
+  const logRef = isOnDefaultBranch
+    ? `${remote}/${featureBranch}..${featureBranch}`
+    : `${remote}/${baseBranch}..${featureBranch}`;
+
   const statsResult = await runGitCommand(
-    `diff --stat ${remote}/${baseBranch}...${featureBranch}`,
+    `diff --stat ${diffRef}`,
     repoDir
   );
 
   const logResult = await runGitCommand(
-    `log --oneline ${remote}/${baseBranch}..${featureBranch}`,
+    `log --oneline ${logRef}`,
     repoDir
   );
 
-  const diffResult = await getDiff(repoDir, remote, baseBranch, featureBranch);
+  const diffResult = await getDiff(repoDir, remote, baseBranch, featureBranch, isOnDefaultBranch);
   if (diffResult.error) {
     return diffResult.error;
   }
@@ -393,7 +447,9 @@ export async function generatePrDescription(args?: GeneratePrDescriptionParams):
 
   // Build the response
   let output = '# PR Description Generator\n\n';
-  output += `**Branch:** \`${featureBranch}\` → \`${baseBranch}\`\n`;
+  output += isOnDefaultBranch
+    ? `**Branch:** \`${featureBranch}\` (unpushed commits)\n`
+    : `**Branch:** \`${featureBranch}\` → \`${baseBranch}\`\n`;
   if (ticketNumber) {
     output += `**Ticket:** ${ticketNumber}\n`;
   }
