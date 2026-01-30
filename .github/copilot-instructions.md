@@ -169,3 +169,22 @@ The server auto-detects the base branch in this priority:
 2. `main` branch
 3. `master` branch
 4. `develop` branch
+
+## Copilot Customizations
+
+This repository includes GitHub Copilot customizations in `.github/`:
+
+### Skills
+- `.github/skills/diffpilot/` - DiffPilot code review skill with tool reference
+
+### Path-Specific Instructions
+- `.github/instructions/typescript.instructions.md` - TypeScript coding standards
+- `.github/instructions/security.instructions.md` - Security implementation guidelines
+- `.github/instructions/testing.instructions.md` - Testing standards with Vitest
+
+### Prompt Files
+- `.github/prompts/pre-commit-review.prompt.md` - Pre-commit review workflow
+- `.github/prompts/prepare-pr.prompt.md` - PR preparation workflow
+- `.github/prompts/security-audit.prompt.md` - Security audit workflow
+
+Use these with GitHub Copilot by referencing the skill or running the prompts.
