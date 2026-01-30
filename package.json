@@ -1,6 +1,6 @@
 {
   "name": "diffpilot",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "MCP server for PR code review and developer productivity",
   "type": "module",
   "main": "dist/index.js",
