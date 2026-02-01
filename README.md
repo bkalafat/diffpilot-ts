@@ -177,6 +177,7 @@ All processing happens locally. Your code never leaves your machine.
 
 | Version | Changes |
 |---------|---------|
+| **2.1.0** | Edge case fix for main/master branch, enterprise security docs |
 | **2.0.4** | Documentation cleanup |
 | **2.0.3** | Privacy & security docs, architecture diagram |
 | **2.0.2** | Reduced package size (8MB → 5MB) |
