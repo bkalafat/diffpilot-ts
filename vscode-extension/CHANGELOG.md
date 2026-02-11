@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-02-11
+
 ### Changed
 - Base branch auto-detection now starts with git history analysis before reflog/config fallbacks
 - Added conservative branch-name fallback rules for `release`, `main`, `master`, `develop`, `dev`

@@ -190,6 +190,7 @@ DiffPilot communicates with VS Code via MCP (Model Context Protocol) over stdio.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.1.1 | 2026-02-11 | Base branch detection now prioritizes git history; large diff review prompts now recommend `#runsubagents` |
 | 2.1.0 | 2026-01-30 | Edge case fix for main/master branch, enterprise security docs |
 | 2.0.4 | 2025-12-11 | Documentation cleanup |
 | 2.0.3 | 2025-12-11 | Privacy & security docs, architecture diagram |
