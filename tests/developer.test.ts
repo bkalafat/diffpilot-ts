@@ -71,6 +71,18 @@ describe('Developer Tools', () => {
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain('No local changes');
     });
+
+    it('should recommend #runsubagents for large diffs and repeat request at end', async () => {
+      const largeDiff = '+line\n'.repeat(1300);
+      mockRunGitCommand
+        .mockResolvedValueOnce({ exitCode: 0, output: 'file.ts | 1300 +' }) // staged stat
+        .mockResolvedValueOnce({ exitCode: 0, output: largeDiff }); // staged diff
+
+      const result = await checkChanges();
+
+      expect(result.content[0].text).toContain('#runsubagents');
+      expect(result.content[0].text).toContain('Code Review Request (Reminder)');
+    });
   });
 
   describe('generateCommitMessage', () => {

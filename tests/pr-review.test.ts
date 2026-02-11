@@ -104,6 +104,19 @@ describe('PR Review Tools', () => {
       expect(result.content[0].text).toContain('security');
       expect(result.content[0].text).toContain('performance');
     });
+
+    it('should recommend #runsubagents for large diffs and repeat request at end', async () => {
+      const largeDiff = 'diff --git a/file.ts b/file.ts\n' + '+line\n'.repeat(1300);
+      mockRunGitCommand
+        .mockResolvedValueOnce({ exitCode: 0, output: '' })
+        .mockResolvedValueOnce({ exitCode: 0, output: largeDiff })
+        .mockResolvedValueOnce({ exitCode: 0, output: 'file.ts | 1300 +' });
+
+      const result = await reviewPrChanges({});
+
+      expect(result.content[0].text).toContain('#runsubagents');
+      expect(result.content[0].text).toContain('Code Review Request (Reminder)');
+    });
   });
 
   describe('generatePrTitle', () => {

@@ -38,6 +38,19 @@ interface ExtractedBranches {
   error?: ToolResult;
 }
 
+const LARGE_DIFF_CHAR_THRESHOLD = 50_000;
+const LARGE_DIFF_LINE_THRESHOLD = 1_200;
+
+function isLargeDiff(diff: string): boolean {
+  if (!diff) {
+    return false;
+  }
+  if (diff.length >= LARGE_DIFF_CHAR_THRESHOLD) {
+    return true;
+  }
+  return diff.split('\n').length >= LARGE_DIFF_LINE_THRESHOLD;
+}
+
 /**
  * Extracts and validates branch parameters from arguments.
  * Auto-detects branches if not provided.
@@ -258,6 +271,7 @@ export async function reviewPrChanges(args?: ReviewPrChangesParams): Promise<Too
   if (diffResult.error) {
     return diffResult.error;
   }
+  const largeDiff = isLargeDiff(diffResult.diff!);
 
   // Get file stats for context
   const statsDiffRef = isOnDefaultBranch
@@ -270,12 +284,17 @@ export async function reviewPrChanges(args?: ReviewPrChangesParams): Promise<Too
 
   // Build review prompt
   let output = '# Code Review Request\n\n';
+  output += 'This is a code review request. Report only actionable issues.\n\n';
   output += isOnDefaultBranch
     ? `**Branch:** \`${featureBranch}\` (unpushed commits)\n\n`
     : `**Branch:** \`${featureBranch}\` → \`${baseBranch}\`\n\n`;
 
   if (statsResult.exitCode === 0 && statsResult.output.trim()) {
     output += '## Change Summary\n```\n' + statsResult.output.trim() + '\n```\n\n';
+  }
+
+  if (largeDiff) {
+    output += '**Large diff detected:** run `#runsubagents` before finalizing the review.\n\n';
   }
 
   output += '## Review Instructions\n\n';
@@ -289,6 +308,13 @@ export async function reviewPrChanges(args?: ReviewPrChangesParams): Promise<Too
   }
 
   output += '## Diff\n\n```diff\n' + truncateContent(diffResult.diff!) + '\n```\n';
+  output += '\n---\n\n';
+  output += '## Code Review Request (Reminder)\n\n';
+  output += 'Report ONLY issues in the required format.';
+  if (largeDiff) {
+    output += ' Diff is large: run `#runsubagents`.';
+  }
+  output += '\n';
 
   return success(output);
 }

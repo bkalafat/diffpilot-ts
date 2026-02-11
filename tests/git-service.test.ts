@@ -186,6 +186,41 @@ describe('Base Branch Detection Strategies', () => {
       // Both independent branches - ambiguous
       expect(isMoreSpecific(false, false)).toBe('ambiguous');
     });
+
+    it('should prefer long-lived base branches over ad-hoc names', () => {
+      const isLikelyLongLivedBaseBranch = (branch: string): boolean => {
+        const name = branch.toLowerCase();
+        return (
+          name === 'main' ||
+          name === 'master' ||
+          name === 'develop' ||
+          name === 'dev' ||
+          name === 'release' ||
+          name.startsWith('release/') ||
+          name.startsWith('release-')
+        );
+      };
+
+      const chooseCandidate = (
+        existingBranch: string,
+        incomingBranch: string,
+        isIncomingChildOfExisting: boolean
+      ): 'existing' | 'incoming' => {
+        const existingStable = isLikelyLongLivedBaseBranch(existingBranch);
+        const incomingStable = isLikelyLongLivedBaseBranch(incomingBranch);
+
+        if (existingStable && !incomingStable) return 'existing';
+        if (incomingStable && !existingStable) return 'incoming';
+        return isIncomingChildOfExisting ? 'incoming' : 'existing';
+      };
+
+      // release should beat non-anchored names like vsControlRelease
+      expect(chooseCandidate('release', 'vsControlRelease', true)).toBe('existing');
+      expect(chooseCandidate('vsControlRelease', 'release', false)).toBe('incoming');
+
+      // still keep hierarchical specificity for stable branches (main -> develop)
+      expect(chooseCandidate('main', 'develop', true)).toBe('incoming');
+    });
   });
 });
 
@@ -280,6 +315,28 @@ describe('Auto-Detection Helpers', () => {
     return branches[0] ?? 'main';
   };
 
+  const detectKeywordFallback = (branches: string[]): string | null => {
+    const rules = [
+      { keyword: 'release', pattern: /^release(?:$|[/-])/i },
+      { keyword: 'main', pattern: /^main$/i },
+      { keyword: 'master', pattern: /^master$/i },
+      { keyword: 'develop', pattern: /^develop$/i },
+      { keyword: 'dev', pattern: /^dev$/i },
+    ];
+
+    for (const rule of rules) {
+      const matches = branches.filter(branch => rule.pattern.test(branch));
+      if (matches.length === 0) continue;
+
+      const exact = matches.find(branch => branch.toLowerCase() === rule.keyword);
+      if (exact) return exact;
+      if (matches.length === 1) return matches[0];
+      return null;
+    }
+
+    return null;
+  };
+
   describe('stripRemotePrefix', () => {
     it.each([
       ['origin/main', 'main'],
@@ -312,6 +369,20 @@ describe('Auto-Detection Helpers', () => {
 
     it('returns "main" for empty array', () => {
       expect(detectBaseBranch([])).toBe('main');
+    });
+  });
+
+  describe('detectKeywordFallback', () => {
+    it('prefers anchored release branch over partial word matches', () => {
+      expect(detectKeywordFallback(['vsControlRelease', 'release'])).toBe('release');
+    });
+
+    it('matches anchored release/* patterns', () => {
+      expect(detectKeywordFallback(['vsControlRelease', 'release/2026.02'])).toBe('release/2026.02');
+    });
+
+    it('returns null when multiple release candidates are ambiguous', () => {
+      expect(detectKeywordFallback(['release/2026.01', 'release/2026.02'])).toBeNull();
     });
   });
 });

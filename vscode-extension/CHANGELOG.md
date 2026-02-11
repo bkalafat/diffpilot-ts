@@ -5,6 +5,19 @@ All notable changes to the DiffPilot extension will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Base branch auto-detection now starts with git history analysis before reflog/config fallbacks
+- Added conservative branch-name fallback rules for `release`, `main`, `master`, `develop`, `dev`
+
+### Fixed
+- Reduced false positives where partial name matches (for example `vsControlRelease`) could be picked instead of anchored release branches
+
+### Review UX
+- `review_code` and `check_changes` outputs now repeat the code review request at both the beginning and end
+- Large diffs now include explicit guidance to run `#runsubagents`
+
 ## [2.1.0] - 2026-01-30
 
 ### Added

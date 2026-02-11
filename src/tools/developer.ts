@@ -19,6 +19,19 @@ import {
 } from '../git/git-service.js';
 import { success, error, gitError, truncateContent, type ToolResult } from './types.js';
 
+const LARGE_DIFF_CHAR_THRESHOLD = 50_000;
+const LARGE_DIFF_LINE_THRESHOLD = 1_200;
+
+function isLargeDiff(diff: string): boolean {
+  if (!diff) {
+    return false;
+  }
+  if (diff.length >= LARGE_DIFF_CHAR_THRESHOLD) {
+    return true;
+  }
+  return diff.split('\n').length >= LARGE_DIFF_LINE_THRESHOLD;
+}
+
 // ============================================================================
 // Tool: generate_commit_message
 // ============================================================================
@@ -76,14 +89,25 @@ export async function checkChanges(): Promise<ToolResult> {
   if (!diffOutput.trim()) {
     return success('✅ No changes detected.');
   }
+  const largeDiff = isLargeDiff(diffOutput);
 
   // Build output with review instructions
-  let output = `${icon} **${changeType}**\n\n`;
+  let output = '# Code Review Request\n\n';
+  output += `${icon} **${changeType}**\n\n`;
+  if (largeDiff) {
+    output += '**Large diff detected:** run `#runsubagents` before finalizing the review.\n\n';
+  }
   output += '```diff\n' + truncateContent(diffOutput, 80000) + '\n```\n\n';
   output += '---\n\n';
   output += '**Review this diff. Report ONLY issues:**\n\n';
   output += '`file:line` - [issue] → [suggestion]\n\n';
   output += '*Skip praise. Focus on bugs, security, performance.*\n';
+  output += '\n---\n\n';
+  output += '**Code Review Request (Reminder):** Report ONLY issues in the required format.';
+  if (largeDiff) {
+    output += ' Diff is large: run `#runsubagents`.';
+  }
+  output += '\n';
 
   return success(output);
 }

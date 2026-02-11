@@ -177,12 +177,13 @@ export async function getDefaultBranch(
 
 /**
  * Finds the base branch that the current branch was created from.
- * Uses multiple detection strategies in order of reliability:
- * 1. Reflog - "Created from X" entry
- * 2. Git config - upstream tracking branch  
- * 3. Merge-base analysis - unique common ancestor
- * 
- * Does NOT guess or use hardcoded branch names. Returns null if uncertain.
+ * Uses multiple detection strategies in order of confidence:
+ * 1. Git history graph - merge-base and ancestry checks
+ * 2. Reflog - "Created from X" entry
+ * 3. Git config - upstream tracking branch
+ * 4. Branch keyword fallback - release/main/master/develop/dev
+ *
+ * Returns null if all strategies are ambiguous.
  */
 export async function findBaseBranch(
   workingDirectory: string,
@@ -193,27 +194,33 @@ export async function findBaseBranch(
     return null;
   }
 
-  // 1️⃣ REFLOG - Branch creation record (most reliable)
+  // 1️⃣ GIT HISTORY - Merge-base + ancestry analysis (highest signal)
+  const historyBase = await findFromGitHistory(workingDirectory, currentBranch, remote);
+  if (historyBase) {
+    return historyBase;
+  }
+
+  // 2️⃣ REFLOG - Branch creation record
   const reflogBase = await findFromReflog(workingDirectory, currentBranch);
   if (reflogBase) {
     const branchRemote = await findRemoteForBranch(workingDirectory, reflogBase) ?? remote;
     return { remote: branchRemote, baseBranch: reflogBase };
   }
 
-  // 2️⃣ GIT CONFIG - Upstream tracking configuration
+  // 3️⃣ GIT CONFIG - Upstream tracking configuration
   const trackingBase = await findFromTrackingConfig(workingDirectory, currentBranch);
   if (trackingBase && trackingBase !== currentBranch) {
     const branchRemote = await getBranchRemote(workingDirectory, currentBranch) ?? remote;
     return { remote: branchRemote, baseBranch: trackingBase };
   }
 
-  // 3️⃣ MERGE-BASE - Unique common ancestor with local/remote branches
-  const mergeBaseResult = await findFromUniqueMergeBase(workingDirectory, currentBranch, remote);
-  if (mergeBaseResult) {
-    return mergeBaseResult;
+  // 4️⃣ KEYWORD FALLBACK - Release/main/master/develop/dev names
+  const keywordBase = await findFromBranchNameKeywords(workingDirectory, currentBranch, remote);
+  if (keywordBase) {
+    return keywordBase;
   }
 
-  // No definitive evidence found - return null (caller should ask user)
+  // No definitive evidence found
   return null;
 }
 
@@ -339,14 +346,14 @@ async function findRemoteForBranch(
 }
 
 // ============================================================================
-// Merge-Base Analysis (Strategy 3)
+// Git History Analysis (Strategy 1)
 // ============================================================================
 
 /**
- * Merge-base analysis: Returns result only if there's a UNIQUE branch with common ancestor.
+ * Git-history analysis: Returns result only if there's a UNIQUE branch with common ancestor.
  * If multiple candidates exist with ambiguity, returns null (no guessing).
  */
-async function findFromUniqueMergeBase(
+async function findFromGitHistory(
   workingDirectory: string,
   currentBranch: string,
   remote: string
@@ -368,7 +375,9 @@ async function findFromUniqueMergeBase(
 
   let uniqueBase: string | null = null;
   let uniqueRemote: string | null = null;
+  let uniqueRef: string | null = null;
   let candidateCount = 0;
+  let hasAmbiguity = false;
 
   // Check local branches
   for (const branch of localBranches) {
@@ -387,29 +396,37 @@ async function findFromUniqueMergeBase(
     if (candidateCount === 1) {
       uniqueBase = branch;
       uniqueRemote = await findRemoteForBranch(workingDirectory, branch) ?? remote;
+      uniqueRef = branch;
     } else {
       // Multiple candidates - check if one is parent of the other
       const isNewCandidateChildOfPrevious = await isBranchAhead(
         workingDirectory,
         branch,
-        uniqueBase!
+        uniqueRef!
       );
-      if (isNewCandidateChildOfPrevious) {
-        // New candidate is child of previous -> use new (more specific)
-        uniqueBase = branch;
-        uniqueRemote = await findRemoteForBranch(workingDirectory, branch) ?? remote;
+      const isPreviousChildOfNewCandidate = await isBranchAhead(
+        workingDirectory,
+        uniqueRef!,
+        branch
+      );
+      if (isNewCandidateChildOfPrevious && !isPreviousChildOfNewCandidate) {
+        const decision = chooseCandidateFromHierarchy(uniqueBase!, branch, true);
+        if (decision === 'incoming') {
+          uniqueBase = branch;
+          uniqueRemote = await findRemoteForBranch(workingDirectory, branch) ?? remote;
+          uniqueRef = branch;
+        }
+        candidateCount = 1;
+      } else if (isPreviousChildOfNewCandidate && !isNewCandidateChildOfPrevious) {
+        const decision = chooseCandidateFromHierarchy(uniqueBase!, branch, false);
+        if (decision === 'incoming') {
+          uniqueBase = branch;
+          uniqueRemote = await findRemoteForBranch(workingDirectory, branch) ?? remote;
+          uniqueRef = branch;
+        }
         candidateCount = 1;
       } else {
-        const isPreviousChildOfNewCandidate = await isBranchAhead(
-          workingDirectory,
-          uniqueBase!,
-          branch
-        );
-        if (isPreviousChildOfNewCandidate) {
-          // Previous is more specific, keep it
-          candidateCount = 1;
-        }
-        // Else: Both are independent, ambiguity remains
+        hasAmbiguity = true;
       }
     }
   }
@@ -430,37 +447,147 @@ async function findFromUniqueMergeBase(
     if (candidateCount === 1) {
       uniqueBase = branch;
       uniqueRemote = remote;
+      uniqueRef = remoteRef;
     } else {
       // Multiple candidates with remote - apply same parent/child logic
-      const remoteUniqueRef = `${uniqueRemote}/${uniqueBase}`;
       const isNewCandidateChildOfPrevious = await isBranchAhead(
         workingDirectory,
         remoteRef,
-        remoteUniqueRef
+        uniqueRef!
       );
-      if (isNewCandidateChildOfPrevious) {
-        uniqueBase = branch;
-        uniqueRemote = remote;
+      const isPreviousChildOfNewCandidate = await isBranchAhead(
+        workingDirectory,
+        uniqueRef!,
+        remoteRef
+      );
+      if (isNewCandidateChildOfPrevious && !isPreviousChildOfNewCandidate) {
+        const decision = chooseCandidateFromHierarchy(uniqueBase!, branch, true);
+        if (decision === 'incoming') {
+          uniqueBase = branch;
+          uniqueRemote = remote;
+          uniqueRef = remoteRef;
+        }
+        candidateCount = 1;
+      } else if (isPreviousChildOfNewCandidate && !isNewCandidateChildOfPrevious) {
+        const decision = chooseCandidateFromHierarchy(uniqueBase!, branch, false);
+        if (decision === 'incoming') {
+          uniqueBase = branch;
+          uniqueRemote = remote;
+          uniqueRef = remoteRef;
+        }
         candidateCount = 1;
       } else {
-        const isPreviousChildOfNewCandidate = await isBranchAhead(
-          workingDirectory,
-          remoteUniqueRef,
-          remoteRef
-        );
-        if (isPreviousChildOfNewCandidate) {
-          candidateCount = 1;
-        }
+        hasAmbiguity = true;
       }
     }
   }
 
   // Only return if there's exactly one definitive candidate
-  if (candidateCount === 1 && uniqueBase) {
+  if (candidateCount === 1 && uniqueBase && !hasAmbiguity) {
     return { remote: uniqueRemote ?? remote, baseBranch: uniqueBase };
   }
 
   return null;
+}
+
+/**
+ * In parent/child conflicts, prefer long-lived base branch names
+ * over ad-hoc branch names. If both have similar stability, prefer child branch.
+ */
+function chooseCandidateFromHierarchy(
+  existingBranch: string,
+  incomingBranch: string,
+  isIncomingChildOfExisting: boolean
+): 'existing' | 'incoming' {
+  const existingStable = isLikelyLongLivedBaseBranch(existingBranch);
+  const incomingStable = isLikelyLongLivedBaseBranch(incomingBranch);
+
+  if (existingStable && !incomingStable) {
+    return 'existing';
+  }
+  if (incomingStable && !existingStable) {
+    return 'incoming';
+  }
+
+  return isIncomingChildOfExisting ? 'incoming' : 'existing';
+}
+
+/**
+ * Heuristic for long-lived base branches.
+ * Uses anchored patterns to avoid false positives (e.g. "vsControlRelease").
+ */
+function isLikelyLongLivedBaseBranch(branch: string): boolean {
+  const name = branch.toLowerCase();
+  return (
+    name === 'main' ||
+    name === 'master' ||
+    name === 'develop' ||
+    name === 'dev' ||
+    name === 'trunk' ||
+    name === 'release' ||
+    name.startsWith('release/') ||
+    name.startsWith('release-') ||
+    name.startsWith('hotfix/') ||
+    name.startsWith('hotfix-')
+  );
+}
+
+/**
+ * Final fallback: choose a branch by anchored keyword names only.
+ * This is intentionally conservative and runs only after all git-history checks.
+ */
+async function findFromBranchNameKeywords(
+  workingDirectory: string,
+  currentBranch: string,
+  remote: string
+): Promise<BranchInfo | null> {
+  const localBranches = await getLocalBranches(workingDirectory, currentBranch);
+  const remoteBranches = await getRemoteBranches(workingDirectory, remote);
+  const allBranches = [...new Set([...localBranches, ...remoteBranches])]
+    .filter(branch => branch !== currentBranch);
+
+  const rules: Array<{ keyword: string; pattern: RegExp }> = [
+    { keyword: 'release', pattern: /^release(?:$|[/-])/i },
+    { keyword: 'main', pattern: /^main$/i },
+    { keyword: 'master', pattern: /^master$/i },
+    { keyword: 'develop', pattern: /^develop$/i },
+    { keyword: 'dev', pattern: /^dev$/i },
+  ];
+
+  for (const rule of rules) {
+    const matches = allBranches.filter(branch => rule.pattern.test(branch));
+    const selected = selectKeywordBranch(matches, rule.keyword);
+    if (!selected) {
+      continue;
+    }
+
+    const branchRemote = remoteBranches.includes(selected)
+      ? remote
+      : await findRemoteForBranch(workingDirectory, selected) ?? remote;
+
+    return {
+      remote: branchRemote,
+      baseBranch: selected,
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Selects a keyword branch only when unambiguous.
+ */
+function selectKeywordBranch(matches: string[], keyword: string): string | null {
+  if (matches.length === 0) {
+    return null;
+  }
+
+  const exactMatch = matches.find(branch => branch.toLowerCase() === keyword);
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  return matches.length === 1 ? matches[0] : null;
 }
 
 /**
