@@ -61,6 +61,7 @@ export async function checkChanges(): Promise<ToolResult> {
   let diffOutput: string;
   let changeType: string;
   let icon: string;
+  let changeSummary: string;
 
   if (hasStaged) {
     const stagedDiff = await runGitCommand('diff --cached', repoDir);
@@ -70,6 +71,7 @@ export async function checkChanges(): Promise<ToolResult> {
     diffOutput = stagedDiff.output;
     changeType = 'Staged changes';
     icon = '📦';
+    changeSummary = stagedStat.output.trim();
   } else {
     // Check unstaged
     const unstagedStat = await runGitCommand('diff --stat', repoDir);
@@ -84,6 +86,7 @@ export async function checkChanges(): Promise<ToolResult> {
     diffOutput = unstagedDiff.output;
     changeType = 'Unstaged changes';
     icon = '📝';
+    changeSummary = unstagedStat.output.trim();
   }
 
   if (!diffOutput.trim()) {
@@ -93,17 +96,25 @@ export async function checkChanges(): Promise<ToolResult> {
 
   // Build output with review instructions
   let output = '# Code Review Request\n\n';
+  output += 'This is a code review request. Report only actionable issues.\n\n';
   output += `${icon} **${changeType}**\n\n`;
+  if (changeSummary) {
+    output += '## Change Summary\n```\n' + changeSummary + '\n```\n\n';
+  }
   if (largeDiff) {
     output += '**Large diff detected:** run `#runsubagents` before finalizing the review.\n\n';
   }
-  output += '```diff\n' + truncateContent(diffOutput, 80000) + '\n```\n\n';
-  output += '---\n\n';
-  output += '**Review this diff. Report ONLY issues:**\n\n';
-  output += '`file:line` - [issue] → [suggestion]\n\n';
-  output += '*Skip praise. Focus on bugs, security, performance.*\n';
+  output += '## Review Instructions\n\n';
+  output += 'Report ONLY issues in this format:\n\n';
+  output += '`file:line` - [severity] [issue] → [suggestion]\n\n';
+  output += 'Severity: 🔴 Critical | 🟠 Major | 🟡 Minor\n\n';
+  output += 'Sort findings by severity (Critical → Major → Minor).\n\n';
+  output += 'Include file and line references for every finding.\n\n';
+  output += 'Focus: Security, bugs, performance. Skip praise.\n\n';
+  output += '## Diff\n\n```diff\n' + truncateContent(diffOutput, 80000) + '\n```\n';
   output += '\n---\n\n';
-  output += '**Code Review Request (Reminder):** Report ONLY issues in the required format.';
+  output += '## Code Review Request (Reminder)\n\n';
+  output += 'Report ONLY issues in the required format. Sort by severity and include `file:line` for each issue.';
   if (largeDiff) {
     output += ' Diff is large: run `#runsubagents`.';
   }

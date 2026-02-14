@@ -43,10 +43,13 @@ describe('Developer Tools', () => {
         .mockResolvedValueOnce({ exitCode: 0, output: '+new code line' }); // staged diff
 
       const result = await checkChanges();
+      const output = result.content[0].text;
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Staged changes');
-      expect(result.content[0].text).toContain('Report ONLY issues');
+      expect(output).toContain('Staged changes');
+      expect(output).toContain('Report ONLY issues');
+      expect(output).toContain('`file:line` - [severity] [issue] → [suggestion]');
+      expect(output).toContain('Sort findings by severity');
     });
 
     it('should fall back to unstaged when no staged changes', async () => {

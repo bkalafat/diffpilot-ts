@@ -88,9 +88,12 @@ describe('PR Review Tools', () => {
         .mockResolvedValueOnce({ exitCode: 0, output: 'file.ts | 5 +' }); // stat
 
       const result = await reviewPrChanges({});
+      const output = result.content[0].text;
 
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain('Report ONLY issues');
+      expect(output).toContain('Report ONLY issues');
+      expect(output).toContain('`file:line` - [severity] [issue] → [suggestion]');
+      expect(output).toContain('Sort findings by severity');
     });
 
     it('should include focus areas when provided', async () => {

@@ -301,6 +301,8 @@ export async function reviewPrChanges(args?: ReviewPrChangesParams): Promise<Too
   output += 'Report ONLY issues in this format:\n\n';
   output += '`file:line` - [severity] [issue] → [suggestion]\n\n';
   output += 'Severity: 🔴 Critical | 🟠 Major | 🟡 Minor\n\n';
+  output += 'Sort findings by severity (Critical → Major → Minor).\n\n';
+  output += 'Include file and line references for every finding.\n\n';
   output += 'Focus: Security, bugs, performance. Skip praise.\n\n';
 
   if (focusAreas) {
@@ -310,7 +312,7 @@ export async function reviewPrChanges(args?: ReviewPrChangesParams): Promise<Too
   output += '## Diff\n\n```diff\n' + truncateContent(diffResult.diff!) + '\n```\n';
   output += '\n---\n\n';
   output += '## Code Review Request (Reminder)\n\n';
-  output += 'Report ONLY issues in the required format.';
+  output += 'Report ONLY issues in the required format. Sort by severity and include `file:line` for each issue.';
   if (largeDiff) {
     output += ' Diff is large: run `#runsubagents`.';
   }
