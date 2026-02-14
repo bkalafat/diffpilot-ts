@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-02-14
+
+### Changed
+- `check_changes` output format now matches `review_code` output format
+- Review instructions now require findings sorted by severity (`Critical` → `Major` → `Minor`)
+- Review instructions now require `file:line` references for every finding
+
 ## [2.1.1] - 2026-02-11
 
 ### Changed

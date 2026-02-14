@@ -177,6 +177,7 @@ All processing happens locally. Your code never leaves your machine.
 
 | Version | Changes |
 |---------|---------|
+| **2.2.0** | `check_changes` output now matches `review_code` format with severity ordering (Critical → Major → Minor) and mandatory `file:line` references |
 | **2.1.1** | Base branch detection now prioritizes git history; large diff review prompts now recommend `#runsubagents` |
 | **2.1.0** | Edge case fix for main/master branch, enterprise security docs |
 | **2.0.4** | Documentation cleanup |

@@ -109,14 +109,15 @@ npm publish
 For testing before official release:
 
 ```
-2.1.0-beta.1
-2.1.0-rc.1
+2.2.0-beta.1
+2.2.0-rc.1
 ```
 
 ## Version History Reference
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 2.2.0 | 2026-02-14 | Unified `check_changes` and `review_code` review format with severity ordering and mandatory file references |
 | 2.1.1 | 2026-02-11 | Improved base branch detection priority, large diff review guidance |
 | 2.1.0 | 2026-01-30 | Edge case fix, security docs |
 | 2.0.4 | 2025-12-11 | Documentation cleanup |
